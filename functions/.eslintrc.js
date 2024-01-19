@@ -25,6 +25,6 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 0,
     'import/no-unresolved': 0,
     'require-jsdoc': 0,
-    indent: ['error', 2],
+    // indent: ['error', 2],
   },
 };

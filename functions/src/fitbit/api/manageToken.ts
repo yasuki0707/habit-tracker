@@ -9,20 +9,15 @@ export const retrieveRefreshToken = async () => {
   // TODO:try-catch or else
   const collection = await firestore().collection(`${FIRESTORE_COLLECTION_PATH}`); // .doc(docId).set(t);
 
-  console.log('FIRESTORE_COLLECTION_PATH:', FIRESTORE_COLLECTION_PATH);
-  console.log('FIRESTORE_DOC_ID:', FIRESTORE_DOC_ID);
-
   const data = (await collection.doc(FIRESTORE_DOC_ID).get()).data();
   if (!data) {
     // TODO: handle error
-    return '';
+    return null;
   }
-  console.log('data:', data['refreshToken']);
-  // const data = refreshToken.data()
-  // console.log('data:', data!['refreshToken']));
   const refreshToken = data['refreshToken'];
   if (!refreshToken) {
     // TODO: handle error
+    return null;
   }
   return refreshToken as string;
 };
@@ -39,24 +34,22 @@ export const issueTokenPair = async (refreshToken: string) => {
     },
   });
   const data = await response.json();
-  console.log('token pair:', data);
 
   // NOTE: failed の時のみ success = false が返ってくる
   if ('success' in data && !data.success) {
     // TODO: handle error
-    console.log('failed to fetch refresh token from firestore');
-    return;
+    console.error('Failed to fetch refresh token from firestore');
+    return null;
   }
   const newAccessToken = data['access_token'];
   const newRefreshToken = data['refresh_token'];
   if (!newAccessToken || !newRefreshToken) {
-    // TODO: handle error
-    return;
+    console.error(`newAccessToken: ${newAccessToken}, newRefreshToken: ${newRefreshToken}`);
+    return null;
   }
   storeRefreshToken(newRefreshToken);
-  console.log('newAccessToken:', newAccessToken);
-  console.log('newRefreshToken:', newRefreshToken);
-  return newAccessToken;
+
+  return newAccessToken as string;
 };
 
 export const storeRefreshToken = async (newRefreshToken: string) => {

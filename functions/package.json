@@ -15,6 +15,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@notionhq/client": "^2.2.14",
     "dayjs": "^1.11.10",
     "firebase-admin": "^11.5.0",
     "firebase-functions": "^4.2.0",
