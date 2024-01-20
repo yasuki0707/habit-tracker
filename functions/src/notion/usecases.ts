@@ -1,9 +1,11 @@
 import { createPage, updatePage } from '@/notion/api/page';
-import { queryDatabase } from '@/notion/api/database';
+import { retrieveDatabase, queryDatabase, createDatabase as createNotionDatabase } from '@/notion/api/database';
 
 // env
 const NOTION_ACCESS_TOKEN = process.env.NOTION_ACCESS_TOKEN as string;
+// FIXME: Since NOTION_DATABASE_ID is dynamic variable, will change by month. It should be held on firestore.
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID as string;
+const NOTION_PARENT_PAGE_ID = process.env.NOTION_PARENT_PAGE_ID as string;
 
 export const createDBPage = async (day: string) => {
   const createPageData = {
@@ -57,6 +59,44 @@ export const updateDBPage = async (
   if (completed) {
     // TODO: LINE 通知などをする
   }
+};
+
+export const createDatabase = async (yyyymm: string) => {
+  const retrieveDatabaseParam = {
+    database_id: NOTION_DATABASE_ID,
+  };
+  const database = await retrieveDatabase(retrieveDatabaseParam, NOTION_ACCESS_TOKEN);
+  if (database === undefined) {
+    console.error(`database: ${NOTION_DATABASE_ID} couldn't be retrieved`);
+    return;
+  }
+  console.log('database:', database);
+
+  const createDatabaseParam = {
+    parent: database.parent,
+    title: [
+      {
+        type: 'text',
+        text: {
+          content: yyyymm,
+          // link: null,
+        },
+        // annotations: {
+        //   bold: false,
+        //   italic: false,
+        //   strikethrough: false,
+        //   underline: false,
+        //   code: false,
+        //   color: 'default',
+        // },
+        plain_text: yyyymm,
+        // href: null,
+      },
+    ],
+    properties: database.properties,
+  };
+  const newDatabase = await createNotionDatabase(createDatabaseParam, NOTION_ACCESS_TOKEN);
+  // TODO: store database_id to firestore
 };
 
 const findPageByDay = async (day: string) => {

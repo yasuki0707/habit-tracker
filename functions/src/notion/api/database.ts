@@ -1,11 +1,10 @@
-import { Client } from '@notionhq/client';
+import { Client, isFullDatabase } from '@notionhq/client';
 import {
-  CreatePageParameters,
-  UpdatePageParameters,
   QueryDatabaseParameters,
+  GetDatabaseParameters,
+  CreateDatabaseParameters,
 } from '@notionhq/client/build/src/api-endpoints';
-import { APIErrorCode, ClientErrorCode, isNotionClientError } from '@notionhq/client/build/src/errors';
-import { getNested } from '@/util/obj';
+import { ClientErrorCode, isNotionClientError } from '@notionhq/client/build/src/errors';
 
 export const queryDatabase = async (filter: QueryDatabaseParameters, accessToken: string) => {
   const notion = new Client({
@@ -31,32 +30,24 @@ export const queryDatabase = async (filter: QueryDatabaseParameters, accessToken
   }
 };
 
-export const updatePage = async (params: UpdatePageParameters, accessToken: string) => {
+export const retrieveDatabase = async (params: GetDatabaseParameters, accessToken: string) => {
   const notion = new Client({
     auth: accessToken,
   });
 
-  // TODO: page_id をどうやって取ってくるか？
-  // 1. キー(Day?)でgetして page_id を抽出？
-  // 2. create した時のを firestore に保存しておく→ 月初に全部createするパターンだと厳しい
-  try {
-    const response = await notion.pages.update(params);
-
-    const progress = getNested(response, 'properties', 'Progress', 'formula', 'number');
-
-    return progress >= 1;
-  } catch (e) {
-    if (isNotionClientError(e)) {
-      switch (e.code) {
-        case ClientErrorCode.RequestTimeout:
-        case ClientErrorCode.ResponseError:
-          console.error('Error has occurred on client request/response.', e.message);
-          break;
-        default:
-          console.error('Error has occurred on server side.', e.message);
-          break;
-      }
-    }
-    return false;
+  const response = await notion.databases.retrieve(params);
+  if (!isFullDatabase(response)) {
+    console.error(`Couldn't retrieve full database.`);
+    return;
   }
+  return response;
+};
+
+export const createDatabase = async (params: any /* CreateDatabaseParameters*/, accessToken: string) => {
+  const notion = new Client({
+    auth: accessToken,
+  });
+
+  const response = await notion.databases.create(params);
+  return response;
 };
