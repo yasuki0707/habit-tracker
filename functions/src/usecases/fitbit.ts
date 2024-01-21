@@ -1,5 +1,5 @@
-import { fetchSleepData } from '@/fitbit/api/sleep';
-import { fetchActivityData } from '@/fitbit/api/activity';
+import { fetchSleepData } from '@/api/fitbit/sleep';
+import { fetchActivityData } from '@/api/fitbit/activity';
 
 export const fetchData = async (dateForFitbit: string, accessToken: string) => {
   const sleep = await fetchSleepData(dateForFitbit, accessToken);

@@ -39,6 +39,7 @@ export const issueTokenPair = async (refreshToken: string) => {
   if ('success' in data && !data.success) {
     // TODO: handle error
     console.error('Failed to fetch refresh token from firestore');
+    console.log(data.errors[0].message);
     return null;
   }
   const newAccessToken = data['access_token'];

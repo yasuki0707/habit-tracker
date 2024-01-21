@@ -1,5 +1,8 @@
-import { createPage, updatePage } from '@/notion/api/page';
-import { retrieveDatabase, queryDatabase, createDatabase as createNotionDatabase } from '@/notion/api/database';
+import { createPage, updatePage } from '@/api/notion/page';
+import { retrieveDatabase, queryDatabase, createDatabase as createNotionDatabase } from '@/api/notion/database';
+import { DayjsDate } from '@/util/day';
+import { retrieveRefreshToken, issueTokenPair } from '@/api/manageToken';
+import { fetchData } from '@/usecases/fitbit';
 
 // env
 const NOTION_ACCESS_TOKEN = process.env.NOTION_ACCESS_TOKEN as string;
@@ -27,14 +30,21 @@ export const createDBPage = async (day: string) => {
   const completed = await createPage(createPageData, NOTION_ACCESS_TOKEN);
 };
 
-export const updateDBPage = async (
-  day: string,
-  runningDurationInMin: number,
-  sleepDurationInMin: number,
-  steps: number,
-) => {
+export const updateDBPage = async (targetDate: DayjsDate) => {
   // filter pages in database that matches "`day`日" for property 'Day'.
-  const pageId = await findPageByDay(day);
+  const dateForFitbit = targetDate.format('YYYY-MM-DD');
+  const oldRefreshToken = await retrieveRefreshToken();
+  if (!oldRefreshToken) {
+    console.error("Couldn't retrieve refresh token");
+    return;
+  }
+  const accessToken = await issueTokenPair(oldRefreshToken);
+  if (!accessToken) {
+    console.error('Access token is not valid');
+    return;
+  }
+  const { running, sleepDurationInMin, steps } = { ...(await fetchData(dateForFitbit, accessToken)) };
+  const pageId = await findPageByDay(targetDate.format('DD'));
   if (!pageId) {
     console.error('page not found');
     return;
@@ -44,7 +54,7 @@ export const updateDBPage = async (
     page_id: pageId,
     properties: {
       RunningTime: {
-        number: runningDurationInMin, // from Fitbit activity? NRC?
+        number: running.durationInMin, // from Fitbit activity? NRC?
       },
       SleepDuration: {
         number: sleepDurationInMin,
