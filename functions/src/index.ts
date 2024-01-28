@@ -4,15 +4,16 @@ import * as admin from 'firebase-admin';
 import { initializeApp } from 'firebase-admin/app';
 import { DayjsDate } from '@/util/day';
 import { updateDBPage, createDBPage, createDatabase } from '@/usecases/notion';
+import { defineString } from 'firebase-functions/params';
 
 // Pub/Sub Topic名
-const PUBSUB_TOPIC_NAME = 'habit-tracker-pubsub-topic';
-
 const { onMessagePublished } = require('firebase-functions/v2/pubsub');
+
+const PUBSUB_TOPIC_NAME = defineString('PUBSUB_TOPIC_NAME');
 
 const firebase = initializeApp();
 
-exports.habitTrackerPubsub = onMessagePublished(PUBSUB_TOPIC_NAME, async (event: any) => {
+exports.habitTrackerPubsub = onMessagePublished({ topic: PUBSUB_TOPIC_NAME }, async (event: any) => {
   // Pub/sub メッセージが来た時点の日付の前日をとる
   const today = new DayjsDate().jt();
   const targetDate = today.dayBefore(1);
