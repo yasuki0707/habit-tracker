@@ -6,14 +6,13 @@ import { fetchData } from '@/usecases/fitbit';
 
 // env
 const NOTION_ACCESS_TOKEN = process.env.NOTION_ACCESS_TOKEN as string;
-// FIXME: Since NOTION_DATABASE_ID is dynamic variable, will change by month. It should be held on firestore.
-const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID as string;
 const NOTION_PARENT_PAGE_ID = process.env.NOTION_PARENT_PAGE_ID as string;
 
-export const createDBPage = async (day: string) => {
+export const createDBPage = async (day: string, newNotionDatabaseId: string) => {
+  const notionDatabaseId = newNotionDatabaseId ?? 'xxxxx'; // TODO: if newNotionDatabaseId is empty, fetch from Firestore
   const createPageData = {
     parent: {
-      database_id: NOTION_DATABASE_ID,
+      database_id: notionDatabaseId,
     },
     properties: {
       Day: {
@@ -72,16 +71,21 @@ export const updateDBPage = async (targetDate: DayjsDate) => {
 };
 
 export const createDatabase = async (yyyymm: string) => {
+  const notionDatabaseId = 'xxxxx'; // TODO: fetch from Firestore
   const retrieveDatabaseParam = {
-    database_id: NOTION_DATABASE_ID,
+    database_id: notionDatabaseId,
   };
   const database = await retrieveDatabase(retrieveDatabaseParam, NOTION_ACCESS_TOKEN);
   if (database === undefined) {
-    console.error(`database: ${NOTION_DATABASE_ID} couldn't be retrieved`);
-    return;
+    console.error(`database: ${notionDatabaseId} couldn't be retrieved`);
+    return '';
   }
   console.log('database:', database);
 
+  // TODO: 以下の項目が意図した通りのコピーされていない
+  // - property のアイコン
+  // - Progress の formula
+  // - property の並び順
   const createDatabaseParam = {
     parent: database.parent,
     title: [
@@ -106,12 +110,16 @@ export const createDatabase = async (yyyymm: string) => {
     properties: database.properties,
   };
   const newDatabase = await createNotionDatabase(createDatabaseParam, NOTION_ACCESS_TOKEN);
-  // TODO: store database_id to firestore
+
+  // TODO: store notion databaseID in firestore
+
+  return newDatabase.id;
 };
 
 const findPageByDay = async (day: string) => {
+  const notionDatabaseId = 'xxxxx'; // TODO: fetch from Firestore
   const filter = {
-    database_id: NOTION_DATABASE_ID,
+    database_id: notionDatabaseId,
     filter: {
       property: 'Day',
       title: {

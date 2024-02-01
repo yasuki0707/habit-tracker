@@ -19,8 +19,6 @@ exports.habitTrackerPubsub = onMessagePublished({ topic: PUBSUB_TOPIC_NAME }, as
   // Pub/sub メッセージが来た時点の日付の前日をとる
   const targetDate = determineTargetDate(event.time, event.data.message.data?.data);
 
-  console.log('targetDate:', targetDate.format('YYYY/MM/DD HH:mm:ss'));
-  return;
   // FIXME: Create request should be executed separately from update request, therefore it's better to prepare for another job and topic by which create request is called in another timing.
   // Or create database(pages for a whole month) at 1st day of each month in the same request.
   // NOTE: Another consideration: Create new month database by duplicating previous database.
@@ -31,11 +29,17 @@ exports.habitTrackerPubsub = onMessagePublished({ topic: PUBSUB_TOPIC_NAME }, as
   // 2024/1/31 AM 0:05 =>               create page for 1/31, update page for 1/30
   // 2024/2/1 AM 0:05 => **create DB**, create page for 2/1, update page for 1/31
   // 2024/2/2 AM 0:05 =>                create page for 2/2, update page for 2/1
-  if (targetDate.format('DD') === '01') {
-    await createDatabase(targetDate.format('YYYY/MM'));
-  }
-  await createDBPage(targetDate.format('DD'));
+
+  // const notionDatabaseId = 'xxxxx'; // TODO: fetch from firestore
   await updateDBPage(targetDate.dayBefore(1));
+
+  let newNotionDatabaseId = '';
+  if (targetDate.format('DD') === '01') {
+    // TODO: 作成した DB の ID を一時的に保存
+    newNotionDatabaseId = await createDatabase(targetDate.format('YYYY/MM'));
+  }
+  // TODO: このタイミングで NOTION_DATABASE_ID の切り替えを行う。
+  await createDBPage(targetDate.format('DD'), newNotionDatabaseId);
 });
 
 const determineTargetDate = (eventTime: string, buf: any) => {
