@@ -43,7 +43,7 @@ export const updateDBPage = async (targetDate: DayjsDate) => {
     return;
   }
   const { running, sleepDurationInMin, steps } = { ...(await fetchData(dateForFitbit, accessToken)) };
-  const pageId = await findPageByDay(targetDate.format('DD'));
+  const pageId = await findPageByDay(targetDate.format('D'));
   if (!pageId) {
     console.error('page not found');
     return;
