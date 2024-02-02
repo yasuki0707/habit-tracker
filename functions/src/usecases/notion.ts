@@ -1,7 +1,7 @@
 import { createPage, updatePage } from '@/api/notion/page';
 import { retrieveDatabase, queryDatabase, createDatabase as createNotionDatabase } from '@/api/notion/database';
 import { DayjsDate } from '@/util/day';
-import { retrieveRefreshToken, issueTokenPair } from '@/api/manageToken';
+import { retrieveRefreshToken, issueTokenPair } from '@/api/fitbit/manageToken';
 import { fetchData } from '@/usecases/fitbit';
 
 // env
