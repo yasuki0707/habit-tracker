@@ -34,12 +34,12 @@ exports.habitTrackerPubsub = onMessagePublished({ topic: PUBSUB_TOPIC_NAME }, as
   await updateDBPage(targetDate.dayBefore(1));
 
   let newNotionDatabaseId = '';
-  if (targetDate.format('DD') === '01') {
+  if (targetDate.isFirstDayOfMonth()) {
     // TODO: 作成した DB の ID を一時的に保存
     newNotionDatabaseId = await createDatabase(targetDate.format('YYYY/MM'));
   }
   // TODO: このタイミングで NOTION_DATABASE_ID の切り替えを行う。
-  await createDBPage(targetDate.format('DD'), newNotionDatabaseId);
+  await createDBPage(targetDate.format('D'), newNotionDatabaseId);
 });
 
 const determineTargetDate = (eventTime: string, buf: any) => {
