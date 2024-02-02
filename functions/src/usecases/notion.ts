@@ -2,14 +2,27 @@ import { createPage, updatePage } from '@/api/notion/page';
 import { retrieveDatabase, queryDatabase, createDatabase as createNotionDatabase } from '@/api/notion/database';
 import { DayjsDate } from '@/util/day';
 import { retrieveRefreshToken, issueTokenPair } from '@/api/fitbit/manageToken';
+import { storeDatabaseId, retrieveNotionDatabaseId } from '@/api/notion/manageDatabaseId';
 import { fetchData } from '@/usecases/fitbit';
 
 // env
 const NOTION_ACCESS_TOKEN = process.env.NOTION_ACCESS_TOKEN as string;
 const NOTION_PARENT_PAGE_ID = process.env.NOTION_PARENT_PAGE_ID as string;
 
-export const createDBPage = async (day: string, newNotionDatabaseId: string) => {
-  const notionDatabaseId = newNotionDatabaseId ?? 'xxxxx'; // TODO: if newNotionDatabaseId is empty, fetch from Firestore
+export const createDBPage = async (day: string, newNotionDatabaseId: string | null) => {
+  const pageIds = await findPageByDay(day);
+  if (pageIds.length > 0) {
+    console.log(`Skip DB page creation, as there's already data for ${day}日 created.`);
+    return;
+  }
+
+  const previousNotionDatabaseId = await retrieveNotionDatabaseId();
+  if (!previousNotionDatabaseId) {
+    console.error("Couldn't retrieve NOTION Database ID");
+    return;
+  }
+  const notionDatabaseId = newNotionDatabaseId ?? previousNotionDatabaseId;
+
   const createPageData = {
     parent: {
       database_id: notionDatabaseId,
@@ -43,14 +56,19 @@ export const updateDBPage = async (targetDate: DayjsDate) => {
     return;
   }
   const { running, sleepDurationInMin, steps } = { ...(await fetchData(dateForFitbit, accessToken)) };
-  const pageId = await findPageByDay(targetDate.format('D'));
-  if (!pageId) {
-    console.error('page not found');
+  const day = targetDate.format('D');
+  const pageIds = await findPageByDay(day);
+  if (pageIds.length === 0) {
+    console.error(`Can't update page, as there's no data for ${day}日`);
+    return;
+  }
+  if (pageIds.length > 1) {
+    console.error(`Can't update page, as there are multiple data for ${day}日`);
     return;
   }
 
   const updatePageData = {
-    page_id: pageId,
+    page_id: pageIds[0],
     properties: {
       RunningTime: {
         number: running.durationInMin, // from Fitbit activity? NRC?
@@ -71,18 +89,21 @@ export const updateDBPage = async (targetDate: DayjsDate) => {
 };
 
 export const createDatabase = async (yyyymm: string) => {
-  const notionDatabaseId = 'xxxxx'; // TODO: fetch from Firestore
+  const notionDatabaseId = await retrieveNotionDatabaseId();
+  if (!notionDatabaseId) {
+    console.error("Couldn't retrieve NOTION Database ID");
+    return null;
+  }
   const retrieveDatabaseParam = {
     database_id: notionDatabaseId,
   };
   const database = await retrieveDatabase(retrieveDatabaseParam, NOTION_ACCESS_TOKEN);
   if (database === undefined) {
     console.error(`database: ${notionDatabaseId} couldn't be retrieved`);
-    return '';
+    return null;
   }
-  console.log('database:', database);
 
-  // TODO: 以下の項目が意図した通りのコピーされていない
+  // FIXME: 以下の項目が意図した通りのコピーされていない
   // - property のアイコン
   // - Progress の formula
   // - property の並び順
@@ -111,13 +132,18 @@ export const createDatabase = async (yyyymm: string) => {
   };
   const newDatabase = await createNotionDatabase(createDatabaseParam, NOTION_ACCESS_TOKEN);
 
-  // TODO: store notion databaseID in firestore
+  // store notion databaseID in firestore
+  await storeDatabaseId(newDatabase.id);
 
   return newDatabase.id;
 };
 
 const findPageByDay = async (day: string) => {
-  const notionDatabaseId = 'xxxxx'; // TODO: fetch from Firestore
+  const notionDatabaseId = await retrieveNotionDatabaseId();
+  if (!notionDatabaseId) {
+    console.error("Couldn't retrieve NOTION Database ID");
+    return [];
+  }
   const filter = {
     database_id: notionDatabaseId,
     filter: {
@@ -129,13 +155,5 @@ const findPageByDay = async (day: string) => {
   };
 
   const pages = await queryDatabase(filter, NOTION_ACCESS_TOKEN);
-  if (pages.length === 0) {
-    console.error(`There's no data for ${day}日`);
-    return;
-  }
-  if (pages.length > 1) {
-    console.error(`There's multiple data for ${day}日`);
-    return;
-  }
-  return pages[0].id;
+  return pages.map((p) => p.id);
 };

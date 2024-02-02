@@ -6,7 +6,5 @@ export const fetchActivityData = async (dateString: string, accessToken: string)
     },
   });
   const data = await response.json();
-  // TODO: データの加工。
-  // 欲しいデータ: 歩行距離,
   return data;
 };

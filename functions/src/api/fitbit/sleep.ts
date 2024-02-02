@@ -6,6 +6,5 @@ export const fetchSleepData = async (dateString: string, accessToken: string) =>
     },
   });
   const data = await response.json();
-  // TODO: データの加工
   return data;
 };

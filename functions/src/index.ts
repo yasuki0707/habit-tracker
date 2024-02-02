@@ -30,15 +30,12 @@ exports.habitTrackerPubsub = onMessagePublished({ topic: PUBSUB_TOPIC_NAME }, as
   // 2024/2/1 AM 0:05 => **create DB**, create page for 2/1, update page for 1/31
   // 2024/2/2 AM 0:05 =>                create page for 2/2, update page for 2/1
 
-  // const notionDatabaseId = 'xxxxx'; // TODO: fetch from firestore
   await updateDBPage(targetDate.dayBefore(1));
 
-  let newNotionDatabaseId = '';
+  let newNotionDatabaseId: string | null = null;
   if (targetDate.isFirstDayOfMonth()) {
-    // TODO: 作成した DB の ID を一時的に保存
     newNotionDatabaseId = await createDatabase(targetDate.format('YYYY/MM'));
   }
-  // TODO: このタイミングで NOTION_DATABASE_ID の切り替えを行う。
   await createDBPage(targetDate.format('D'), newNotionDatabaseId);
 });
 
