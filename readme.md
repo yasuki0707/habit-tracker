@@ -32,6 +32,8 @@ _You need to store activity data with a device such as a wearable device or a sm
 2. Create a new database under the page.
    - database id(path parameter that follows the part `https://www.notion.so/`) will be used later.
 3. Add properties:
+   - `Day`: day of the mouth
+     - type: Title
    - `RunningTime`: running time in minutes in the day
      - type: Number
    - `SleepDuration`: sleep time in minutes over the night
@@ -103,15 +105,7 @@ where:
 
 #### Cloud Scheduler
 
-TODO:
-
-```
-Cloud Scheduler によりメッセージが Pub/Sub トピックめがけて送信されると、以下の処理が実行される:
-- (毎日)その日のデータ行を一行追加し、前日のデータを書き込む
-- (毎月1日のみ)データベース（テーブル）を追加する
-
-これにより、月替わり対応も自動で行い、基本的にはどんどん新しいデータを書き込んでいってくれルようになっている。
-```
+Set as you like(e.g. `10 0 * * *`).
 
 ## Build and Deploy
 
