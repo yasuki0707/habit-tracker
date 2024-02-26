@@ -11,12 +11,12 @@ export const retrieveRefreshToken = async () => {
   const data = (await collection.doc(FITBIT_DOC_ID).get()).data();
 
   if (!data) {
-    console.error(`Document ${FITBIT_DOC_ID} is not included in Firestore:${COLLECTION_PATH}`);
+    console.error(`Document '${FITBIT_DOC_ID}' is not included in Firestore: '${COLLECTION_PATH}'`);
     return null;
   }
   const refreshToken = data['refreshToken'];
   if (!refreshToken) {
-    console.error(`Field 'refreshToken' is not included in Firestore:${COLLECTION_PATH}/${FITBIT_DOC_ID}`);
+    console.error(`Field 'refreshToken' is not included in Firestore: '${COLLECTION_PATH}/${FITBIT_DOC_ID}'`);
     return null;
   }
   return refreshToken as string;

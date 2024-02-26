@@ -43,6 +43,7 @@ export const retrieveDatabase = async (params: GetDatabaseParameters, accessToke
   return response;
 };
 
+// FIXME: 引数型指定でコンパイルエラーは SDK 側の問題っぽい（https://github.com/makenotion/notion-sdk-js/issues/475）ので、解決したら対応
 export const createDatabase = async (params: any /* CreateDatabaseParameters*/, accessToken: string) => {
   const notion = new Client({
     auth: accessToken,
