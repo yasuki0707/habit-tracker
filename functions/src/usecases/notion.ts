@@ -128,6 +128,14 @@ export const createDatabase = async (yyyymm: string) => {
         // href: null,
       },
     ],
+    // TODO: https://www.pexels.com/search/landscape/ などから適当にカバー画像を取ってきてセットする
+    //   "cover": {
+    //     "type": "external",
+    //     "external": {
+    //         "url": "https://www.notion.so/images/page-cover/met_william_morris_1875.jpg"
+    //     }
+    // },
+    cover: database.cover,
     properties: database.properties,
   };
   const newDatabase = await createNotionDatabase(createDatabaseParam, NOTION_ACCESS_TOKEN);
